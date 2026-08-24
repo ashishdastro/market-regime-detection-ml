@@ -48,6 +48,10 @@ at \(t+1\). Transaction costs are charged on position changes.
 Diagnostics include CAGR, volatility, Sharpe, Sortino, maximum drawdown, Calmar ratio, annual
 turnover, and regime switches per year.
 
+For long monthly studies, `--max-train-size 2016` uses a rolling eight-year training window. This
+keeps the model adaptive and the from-scratch dynamic program computationally reproducible while
+retaining strict train-before-test ordering.
+
 ## Repository structure
 
 ```text
@@ -119,3 +123,5 @@ plot_lambda_sensitivity(study, "figures/lambda_sensitivity.png")
 
 Inspired by Shu, Yu, and Mulvey, *Downside Risk Reduction Using Regime-Switching Signals: A
 Statistical Jump Model Approach* ([arXiv:2402.05272](https://arxiv.org/abs/2402.05272)).
+
+See [paper/results.md](paper/results.md) for the SPY, QQQ, and BTC-USD walk-forward findings.

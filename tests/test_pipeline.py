@@ -56,6 +56,14 @@ def test_metrics_have_expected_fields():
     assert {"cagr", "sharpe", "max_drawdown", "annual_turnover"} <= values.keys()
 
 
+def test_metrics_infer_crypto_calendar_frequency():
+    index = pd.date_range("2020-01-01", periods=730, freq="D")
+    returns = pd.Series(0.001, index=index)
+    inferred = performance_metrics(returns)
+    explicit = performance_metrics(returns, periods_per_year=365)
+    assert np.isclose(inferred["cagr"], explicit["cagr"])
+
+
 def test_hmm_causal_filter_runs_with_diagonal_covariance():
     rng = np.random.default_rng(11)
     X = np.r_[rng.normal(-1, 0.4, (80, 3)), rng.normal(1, 0.4, (80, 3))]

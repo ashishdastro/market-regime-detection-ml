@@ -25,6 +25,7 @@ def run_experiment(
     min_train_size: int = 756,
     test_size: int = 21,
     transaction_cost_bps: float = 5.0,
+    max_train_size: int | None = None,
 ) -> pd.DataFrame:
     if synthetic:
         prices, returns, _ = synthetic_market_data()
@@ -35,7 +36,7 @@ def run_experiment(
     aligned_returns = returns.reindex(features.index)
     factories = {
         "kmeans": lambda: KMeansRegimeModel(),
-        "tr_kmeans": lambda: JumpModel(jump_penalty=1.0, n_init=5),
+        "tr_kmeans": lambda: JumpModel(jump_penalty=1.0, n_init=2, max_iter=50),
         "gaussian_hmm": lambda: GaussianHMMRegimeModel(),
         "xgboost": lambda: XGBoostRegimeClassifier(),
     }
@@ -51,6 +52,7 @@ def run_experiment(
             min_train_size=min_train_size,
             test_size=test_size,
             supervised=name == "xgboost",
+            max_train_size=max_train_size,
         )
         result = backtest_regime_strategy(
             aligned_returns.reindex(signal.index), signal, transaction_cost_bps=transaction_cost_bps
@@ -65,7 +67,18 @@ def run_experiment(
     metrics.to_csv(output / f"{symbol.lower()}_metrics.csv")
     plot_equity_curves(pd.DataFrame(strategy_returns), output / f"{symbol.lower()}_equity_curves.png")
     (output / f"{symbol.lower()}_metadata.json").write_text(
-        json.dumps({"symbol": symbol, "start": start, "synthetic": synthetic, "observations": len(features)}, indent=2),
+        json.dumps(
+            {
+                "symbol": symbol,
+                "start": start,
+                "synthetic": synthetic,
+                "observations": len(features),
+                "min_train_size": min_train_size,
+                "test_size": test_size,
+                "max_train_size": max_train_size,
+            },
+            indent=2,
+        ),
         encoding="utf-8",
     )
     return metrics

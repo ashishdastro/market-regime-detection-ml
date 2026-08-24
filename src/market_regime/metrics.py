@@ -6,11 +6,19 @@ import numpy as np
 import pandas as pd
 
 
-def performance_metrics(returns: pd.Series, positions: pd.Series | None = None) -> dict[str, float]:
+def performance_metrics(
+    returns: pd.Series,
+    positions: pd.Series | None = None,
+    periods_per_year: int | None = None,
+) -> dict[str, float]:
     clean = returns.dropna()
     if clean.empty:
         raise ValueError("returns must contain observations")
-    annual = 252.0
+    if periods_per_year is None and isinstance(clean.index, pd.DatetimeIndex) and len(clean) > 1:
+        elapsed_years = max((clean.index[-1] - clean.index[0]).days / 365.25, 1 / 365.25)
+        observed_frequency = len(clean) / elapsed_years
+        periods_per_year = 365 if observed_frequency > 300 else 252
+    annual = float(periods_per_year or 252)
     years = len(clean) / annual
     wealth = (1 + clean).cumprod()
     cagr = wealth.iloc[-1] ** (1 / years) - 1

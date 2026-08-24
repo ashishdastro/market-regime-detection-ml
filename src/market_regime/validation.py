@@ -27,15 +27,19 @@ def walk_forward_predict(
     test_size: int = 21,
     supervised: bool = False,
     label_horizon: int = 21,
+    max_train_size: int | None = None,
 ) -> pd.Series:
-    """Retrain on an expanding window and causally infer each test block."""
+    """Retrain on an expanding or bounded rolling window and infer each test block."""
     features = features.sort_index()
     returns = returns.reindex(features.index)
     predictions = pd.Series(index=features.index, dtype=float, name="bull_signal")
     for start in range(min_train_size, len(features), test_size):
         stop = min(start + test_size, len(features))
-        train_x, test_x = expanding_standardize(features.iloc[:start], features.iloc[start:stop])
-        train_returns = returns.iloc[:start]
+        train_start = 0 if max_train_size is None else max(0, start - max_train_size)
+        train_x, test_x = expanding_standardize(
+            features.iloc[train_start:start], features.iloc[start:stop]
+        )
+        train_returns = returns.iloc[train_start:start]
         model = model_factory()
         if supervised:
             if not isinstance(model, XGBoostRegimeClassifier):
